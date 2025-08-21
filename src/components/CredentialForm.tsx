@@ -26,7 +26,7 @@ export function CredentialForm({ open, onOpenChange, credential, onSave }: Crede
     if (credential) {
       setFormData({
         platform: credential.platform,
-        domain: credential.domain,
+        domain: credential.domain || "",
         username: credential.username,
         password: credential.password,
       });

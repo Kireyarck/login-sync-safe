@@ -1,35 +1,53 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus, Search, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CredentialCard, type Credential } from "@/components/CredentialCard";
 import { CredentialForm } from "@/components/CredentialForm";
 import { useToast } from "@/hooks/use-toast";
-
-// Mock data inicial - em produção isso viria do Supabase
-const initialCredentials: Credential[] = [
-  {
-    id: "1",
-    platform: "Gmail",
-    domain: "gmail.com",
-    username: "usuario@gmail.com",
-    password: "senhaSegura123!"
-  },
-  {
-    id: "2", 
-    platform: "Facebook",
-    domain: "facebook.com",
-    username: "meuusuario@email.com",
-    password: "MinhaSenh@456"
-  }
-];
+import { supabase } from "@/integrations/supabase/client";
 
 export default function CredentialManager() {
-  const [credentials, setCredentials] = useState<Credential[]>(initialCredentials);
+  const [credentials, setCredentials] = useState<Credential[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCredential, setEditingCredential] = useState<Credential | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  // Carregar credenciais do Supabase
+  useEffect(() => {
+    fetchCredentials();
+  }, []);
+
+  const fetchCredentials = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('credentials')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar credenciais: " + error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setCredentials(data || []);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao carregar credenciais.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredCredentials = useMemo(() => {
     if (!searchTerm) return credentials;
@@ -40,25 +58,59 @@ export default function CredentialManager() {
     );
   }, [credentials, searchTerm]);
 
-  const handleSaveCredential = (credentialData: Omit<Credential, "id"> & { id?: string }) => {
-    if (credentialData.id) {
-      // Editar existente
-      setCredentials(prev =>
-        prev.map(cred =>
-          cred.id === credentialData.id
-            ? { ...cred, ...credentialData }
-            : cred
-        )
-      );
-    } else {
-      // Adicionar nova
-      const newCredential: Credential = {
-        ...credentialData,
-        id: Math.random().toString(36).substr(2, 9)
-      };
-      setCredentials(prev => [...prev, newCredential]);
+  const handleSaveCredential = async (credentialData: Omit<Credential, "id"> & { id?: string }) => {
+    try {
+      if (credentialData.id) {
+        // Editar existente
+        const { error } = await supabase
+          .from('credentials')
+          .update({
+            platform: credentialData.platform,
+            domain: credentialData.domain,
+            username: credentialData.username,
+            password: credentialData.password,
+          })
+          .eq('id', credentialData.id);
+
+        if (error) {
+          toast({
+            title: "Erro",
+            description: "Erro ao atualizar credencial: " + error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+      } else {
+        // Adicionar nova
+        const { error } = await supabase
+          .from('credentials')
+          .insert([{
+            platform: credentialData.platform,
+            domain: credentialData.domain,
+            username: credentialData.username,
+            password: credentialData.password,
+          }]);
+
+        if (error) {
+          toast({
+            title: "Erro",
+            description: "Erro ao adicionar credencial: " + error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Recarregar credenciais
+      await fetchCredentials();
+      setEditingCredential(null);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao salvar credencial.",
+        variant: "destructive",
+      });
     }
-    setEditingCredential(null);
   };
 
   const handleEditCredential = (credential: Credential) => {
@@ -111,7 +163,12 @@ export default function CredentialManager() {
         </div>
 
         {/* Lista de credenciais */}
-        {filteredCredentials.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <Shield className="w-16 h-16 text-muted-foreground mx-auto mb-4 animate-pulse" />
+            <p className="text-muted-foreground">Carregando credenciais...</p>
+          </div>
+        ) : filteredCredentials.length === 0 ? (
           <div className="text-center py-12">
             <Shield className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-muted-foreground mb-2">

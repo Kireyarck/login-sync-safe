@@ -7,9 +7,11 @@ import { useToast } from "@/hooks/use-toast";
 export interface Credential {
   id: string;
   platform: string;
-  domain: string;
+  domain: string | null;
   username: string;
   password: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface CredentialCardProps {
