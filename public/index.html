@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Credenciais</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Gerenciador de Credenciais</h1>
+            <div class="header-actions">
+                <div class="search-container">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Buscar credenciais..." 
+                        class="search-input"
+                    >
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+                <button id="addButton" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Nova Credencial
+                </button>
+            </div>
+        </header>
+
+        <div class="credentials-grid" id="credentialsGrid">
+            <!-- Credenciais serão inseridas aqui -->
+        </div>
+
+        <div class="loading" id="loading" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i>
+            Carregando...
+        </div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="fas fa-key"></i>
+            <p>Nenhuma credencial encontrada</p>
+        </div>
+
+        <div class="stats" id="stats">
+            <!-- Estatísticas serão inseridas aqui -->
+        </div>
+    </div>
+
+    <!-- Modal para adicionar/editar credencial -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nova Credencial</h2>
+                <button id="closeModal" class="close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="credentialForm" class="form">
+                <div class="form-group">
+                    <label for="platform">Plataforma *</label>
+                    <input type="text" id="platform" required>
+                </div>
+                <div class="form-group">
+                    <label for="domain">Domínio</label>
+                    <input type="text" id="domain" placeholder="exemplo.com">
+                </div>
+                <div class="form-group">
+                    <label for="username">Usuário *</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Senha *</label>
+                    <div class="password-input-container">
+                        <input type="password" id="password" required>
+                        <button type="button" id="generatePassword" class="btn btn-secondary">
+                            <i class="fas fa-random"></i>
+                            Gerar
+                        </button>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="cancelButton" class="btn btn-secondary">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="saveButton" class="btn btn-primary">
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+</body>
+</html>
